@@ -1,0 +1,7 @@
+key,value
+package,com.example:root:1.0
+repo,http://127.0.0.1:8765
+test_mode,false
+output,out/demo_maven_cycle.png
+ascii_tree,true
+filter,lib-c

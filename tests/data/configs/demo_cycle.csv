@@ -1,0 +1,7 @@
+key,value
+package,A
+repo,tests/data/graphs/cycle_inner.txt
+test_mode,true
+output,out/demo_cycle.png
+ascii_tree,true
+filter,

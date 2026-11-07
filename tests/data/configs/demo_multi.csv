@@ -1,0 +1,7 @@
+key,value
+package,A
+repo,tests/data/graphs/multi.txt
+test_mode,true
+output,out/demo_multi.png
+ascii_tree,true
+filter,

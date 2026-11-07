@@ -1,0 +1,7 @@
+key,value
+package,org.apache.commons:commons-text:1.10.0
+repo,https://repo1.maven.org/maven2
+test_mode,false
+output,out/commons-text.png
+ascii_tree,true
+filter,

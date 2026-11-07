@@ -1,0 +1,8 @@
+key,value
+package,G
+repo,tests/data/graphs/multi.txt
+test_mode,true
+output,out/demo_reverse.png
+ascii_tree,true
+filter,
+reverse,true

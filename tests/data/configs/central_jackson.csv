@@ -1,0 +1,7 @@
+key,value
+package,com.fasterxml.jackson.core:jackson-databind:2.15.2
+repo,https://repo1.maven.org/maven2
+test_mode,false
+output,out/jackson.png
+ascii_tree,true
+filter,

@@ -2,7 +2,8 @@
 # Общие функции тестовых скриптов (подключается командой source).
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 1
 PY="$(command -v python || command -v python3)"
-EMU=("$PY" src/main.py)
+EMU_FULL=("$PY" src/main.py)
+EMU=("${EMU_FULL[@]}" --no-image)
 TMP_CONFIG="tests/_tmp_config.csv"
 
 base_config() {

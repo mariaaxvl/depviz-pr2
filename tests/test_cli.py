@@ -31,17 +31,17 @@ class CliTest(unittest.TestCase):
         overrides.setdefault("repo", self.url)
         return run_main(write_temp(self, make_csv(overrides)))
 
-    def test_prints_dependencies(self):
-        """Выводятся все прямые зависимости."""
+    def test_prints_graph(self):
+        """Выводится граф с транзитивными зависимостями."""
         code, out, err = self.run_with()
         self.assertEqual(code, 0)
-        self.assertIn("  com.example:lib-b:2.0", out)
+        self.assertIn("com.example:lib-c:1.0 -> org.demo:util:1.0", out)
         self.assertIn("ghost", err)
 
     def test_no_dependencies(self):
         """Пакет без зависимостей."""
         code, out, _ = self.run_with(package="com.example:managed:3.0")
-        self.assertIn("(нет прямых зависимостей)", out)
+        self.assertIn("(нет зависимостей)", out)
 
     def test_unknown_package(self):
         """Неизвестный пакет - код 3."""
@@ -54,3 +54,43 @@ class CliTest(unittest.TestCase):
         code, _, err = self.run_with(output="x.jpg")
         self.assertEqual(code, 2)
         self.assertIn("Ошибка конфигурации", err)
+
+
+class TestModeTest(unittest.TestCase):
+    """Проверки тестового режима и ошибок графа."""
+
+    def run_graph(self, graph, package="A", substring=""):
+        """Запускает main для тестового репозитория из файла."""
+        path = os.path.join(DATA_DIR, "graphs", graph)
+        text = make_csv({"package": package, "repo": path,
+                         "test_mode": "true", "filter": substring})
+        return run_main(write_temp(self, text))
+
+    def test_graph_output(self):
+        """Выводятся рёбра графа."""
+        code, out, _ = self.run_graph("simple.txt")
+        self.assertEqual(code, 0)
+        self.assertIn("A -> B, C", out)
+        self.assertIn("Циклических зависимостей не найдено", out)
+
+    def test_cycle_output(self):
+        """Выводится информация о цикле."""
+        _, out, _ = self.run_graph("cycle.txt")
+        self.assertIn("A -> B -> C -> A", out)
+
+    def test_filter_output(self):
+        """Выводятся исключённые пакеты."""
+        _, out, _ = self.run_graph("multi.txt", substring="F")
+        self.assertIn("Исключены фильтром: F", out)
+
+    def test_unknown_package(self):
+        """Пакет отсутствует в тестовом репозитории - код 3."""
+        code, _, err = self.run_graph("simple.txt", package="Z")
+        self.assertEqual(code, 3)
+        self.assertIn("не найден", err)
+
+    def test_filter_root(self):
+        """Корень исключён фильтром - код 4."""
+        code, _, err = self.run_graph("simple.txt", substring="A")
+        self.assertEqual(code, 4)
+        self.assertIn("Ошибка графа", err)

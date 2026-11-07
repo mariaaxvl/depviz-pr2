@@ -37,6 +37,7 @@ class Coord(namedtuple("Coord", "group artifact version")):
         return cls(*parts)
 
     def __str__(self):
+        """Строка группа:артефакт:версия."""
         return ":".join(self)
 
 

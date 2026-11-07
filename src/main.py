@@ -1,13 +1,16 @@
-"""Визуализатор графа зависимостей (этап 2: сбор данных)."""
+"""Визуализатор графа зависимостей (этап 3: построение графа)."""
 import argparse
 import sys
 
 from config import ConfigError, load_config
+from filerepo import FileRepository
+from graph import GraphError, build_graph, describe
 from maven import MavenRepository, RepositoryError
 
 EXIT_OK = 0
 EXIT_CONFIG = 2
 EXIT_REPO = 3
+EXIT_GRAPH = 4
 
 
 def parse_args(argv=None):
@@ -28,17 +31,8 @@ def configure_output():
 def load_repository(config):
     """Создаёт репозиторий по настройкам."""
     if config.test_mode:
-        raise RepositoryError("тестовый режим будет добавлен на этапе 3")
+        return FileRepository(config.repo)
     return MavenRepository(config.repo)
-
-
-def print_dependencies(package, dependencies):
-    """Выводит прямые зависимости пакета."""
-    print(f"Прямые зависимости пакета {package}:")
-    for dep in dependencies:
-        print(f"  {dep}")
-    if not dependencies:
-        print("  (нет прямых зависимостей)")
 
 
 def main(argv=None):
@@ -52,12 +46,15 @@ def main(argv=None):
         return EXIT_CONFIG
     try:
         repo = load_repository(config)
-        dependencies = repo.dependencies(config.package)
+        graph = build_graph(repo, config.package, config.substring)
     except RepositoryError as err:
         print(f"Ошибка репозитория: {err}", file=sys.stderr)
         return EXIT_REPO
-    print_dependencies(config.package, dependencies)
-    for warning in repo.warnings:
+    except GraphError as err:
+        print(f"Ошибка графа: {err}", file=sys.stderr)
+        return EXIT_GRAPH
+    print(describe(graph, config.package))
+    for warning in getattr(repo, "warnings", []):
         print(f"Предупреждение: {warning}", file=sys.stderr)
     return EXIT_OK
 

@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*.png
+*.zip
+out/
+_tmp_*
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.idea/
+.vscode/

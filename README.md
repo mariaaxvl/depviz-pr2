@@ -3,8 +3,8 @@
 ## 1. Общее описание
 CLI-инструмент на Python 3 для анализа и визуализации графа
 зависимостей Maven-пакетов. Готовые менеджеры пакетов и библиотеки для
-получения зависимостей не используются. Реализован этап 1:
-конфигурационный файл CSV и проверка всех параметров.
+получения зависимостей не используются. Реализованы этапы 1-2:
+конфигурация CSV и чтение прямых зависимостей Maven-пакета по URL.
 
 ## 2. Функции и настройки
 Запуск: `./run.sh config.csv`. Конфигурация - CSV из строк
@@ -19,18 +19,22 @@ CLI-инструмент на Python 3 для анализа и визуализ
 | `ascii_tree` | `true` - вывести ASCII-дерево |
 | `filter` | подстрока: пакеты с ней в имени не анализируются |
 
-При запуске параметры выводятся в формате `ключ = значение`.
-Ошибки конфигурации: сообщение в stderr, код возврата 2.
+Код возврата: 0 - успех, 2 - ошибка конфигурации, 3 - ошибка
+репозитория. Сообщения об ошибках выводятся в stderr.
+
+Прямые зависимости берутся из POM (`parent`, `${свойства}`,
+`dependencyManagement`); учитываются scope compile и runtime,
+`optional` пропускаются.
 
 ## 3. Сборка и тесты
     PYTHONPATH=src python3 -m unittest discover -s tests
     ./tests/stage1.sh
+    ./tests/stage2.sh
+    CENTRAL=1 ./tests/stage2.sh   # реальный Maven Central, нужен интернет
 
 ## 4. Примеры
-    $ ./run.sh tests/data/configs/test_simple.csv
-    package = A
-    repo = tests/data/graphs/simple.txt
-    test_mode = true
-    output = out/simple.png
-    ascii_tree = true
-    filter =
+    $ ./run.sh tests/data/configs/maven.csv
+    Прямые зависимости пакета com.example:app:1.0:
+      com.example:lib-a:1.0
+      com.example:lib-b:2.0
+      com.example:managed:3.0

@@ -7,7 +7,7 @@ TMP_CONFIG="tests/_tmp_config.csv"
 
 base_config() {
     printf '%s\n' "package,com.example:app:1.0" \
-        "repo,http://localhost:8765" "test_mode,false" \
+        "repo,http://127.0.0.1:8765" "test_mode,false" \
         "output,out/g.png" "ascii_tree,false" "filter,"
 }
 
@@ -29,4 +29,15 @@ try_text() {
     printf '%s\n' "${@:2}" > "$TMP_CONFIG"
     run_config "$TMP_CONFIG"
     rm -f "$TMP_CONFIG"
+}
+
+start_server() {
+    "$PY" -m http.server 8765 --bind 127.0.0.1 \
+        --directory tests/data/maven_repo >/dev/null 2>&1 &
+    SERVER_PID=$!
+    sleep 1
+}
+
+stop_server() {
+    kill "$SERVER_PID" 2>/dev/null
 }

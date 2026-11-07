@@ -8,7 +8,7 @@ from helpers import DATA_DIR, write_temp
 SIMPLE = os.path.join(DATA_DIR, "graphs", "simple.txt")
 BASE = {
     "package": "com.example:app:1.0",
-    "repo": "http://localhost:8765",
+    "repo": "http://127.0.0.1:8765",
     "test_mode": "false",
     "output": "out/g.png",
     "ascii_tree": "false",

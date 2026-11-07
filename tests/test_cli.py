@@ -1,0 +1,56 @@
+"""Тесты командной строки: вывод и коды возврата."""
+import contextlib
+import io
+import os
+import unittest
+
+from helpers import DATA_DIR, start_repo_server, write_temp
+from main import main
+from test_config import make_csv
+
+REPO_DIR = os.path.join(DATA_DIR, "maven_repo")
+
+
+def run_main(path):
+    """Запускает main с конфигом; возвращает (код, stdout, stderr)."""
+    out, err = io.StringIO(), io.StringIO()
+    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+        code = main([path])
+    return code, out.getvalue(), err.getvalue()
+
+
+class CliTest(unittest.TestCase):
+    """Проверки вывода зависимостей и обработки ошибок."""
+
+    def setUp(self):
+        """Запускает локальный репозиторий."""
+        self.url = start_repo_server(self, REPO_DIR)
+
+    def run_with(self, **overrides):
+        """Запускает main с конфигурацией BASE и заменами."""
+        overrides.setdefault("repo", self.url)
+        return run_main(write_temp(self, make_csv(overrides)))
+
+    def test_prints_dependencies(self):
+        """Выводятся все прямые зависимости."""
+        code, out, err = self.run_with()
+        self.assertEqual(code, 0)
+        self.assertIn("  com.example:lib-b:2.0", out)
+        self.assertIn("ghost", err)
+
+    def test_no_dependencies(self):
+        """Пакет без зависимостей."""
+        code, out, _ = self.run_with(package="com.example:managed:3.0")
+        self.assertIn("(нет прямых зависимостей)", out)
+
+    def test_unknown_package(self):
+        """Неизвестный пакет - код 3."""
+        code, _, err = self.run_with(package="com.example:nope:1.0")
+        self.assertEqual(code, 3)
+        self.assertIn("Ошибка репозитория", err)
+
+    def test_bad_config(self):
+        """Ошибка конфигурации - код 2."""
+        code, _, err = self.run_with(output="x.jpg")
+        self.assertEqual(code, 2)
+        self.assertIn("Ошибка конфигурации", err)

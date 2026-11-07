@@ -47,6 +47,8 @@ def build_graph(repo, root, substring="", graph=None):
         raise GraphError(
             f"корневой пакет '{root}' исключён фильтром '{substring}'")
     graph = graph if graph is not None else DependencyGraph()
+    if root in graph.edges:
+        return graph
     try:
         visit(repo, root, substring, graph, [])
     except RecursionError:
@@ -74,4 +76,53 @@ def describe(graph, root):
     lines.extend(describe_cycles(graph))
     if graph.skipped:
         lines.append("Исключены фильтром: " + ", ".join(graph.skipped))
+    return "\n".join(lines)
+
+
+class ReverseRepository:
+    """Репозиторий-адаптер: зависимости пакета = пакеты, зависящие от него."""
+
+    def __init__(self, dependents):
+        """Принимает словарь {пакет: список зависящих от него пакетов}."""
+        self.dependents = dependents
+
+    def dependencies(self, name):
+        """Пакеты, которые зависят от name."""
+        return self.dependents.get(name, [])
+
+
+def build_full_graph(repo, roots, substring=""):
+    """Общий граф всех пакетов, достижимых из roots (DFS из каждого)."""
+    graph = DependencyGraph()
+    for root in roots:
+        if not is_skipped(root, substring):
+            build_graph(repo, root, substring, graph)
+    return graph
+
+
+def invert(graph):
+    """Обращает рёбра: {пакет: список пакетов, зависящих от него}."""
+    dependents = {}
+    for node, deps in graph.edges.items():
+        for dep in deps:
+            dependents.setdefault(dep, []).append(node)
+    return dependents
+
+
+def reverse_graph(graph, target):
+    """Обратные зависимости target тем же обходом DFS по обращённым рёбрам."""
+    if target not in graph.edges:
+        raise GraphError(f"пакет '{target}' отсутствует в анализируемом графе")
+    return build_graph(ReverseRepository(invert(graph)), target)
+
+
+def describe_reverse(graph, target):
+    """Текстовый отчёт об обратных зависимостях пакета."""
+    count = len(graph.edges) - 1
+    lines = [f"Обратные зависимости пакета {target} "
+             f"(пакеты, зависящие от него): {count}"]
+    for node, dependents in graph.edges.items():
+        sources = ", ".join(dependents) or "(никто не зависит)"
+        lines.append(f"  {node} <- {sources}")
+    lines.extend(describe_cycles(graph))
     return "\n".join(lines)

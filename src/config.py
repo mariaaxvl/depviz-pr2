@@ -2,12 +2,14 @@
 import csv
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 REQUIRED_KEYS = (
     "package", "repo", "test_mode", "output", "ascii_tree", "filter",
 )
-ALL_KEYS = REQUIRED_KEYS
+OPTIONAL_KEYS = ("reverse", "universe")
+ALL_KEYS = REQUIRED_KEYS + OPTIONAL_KEYS
+UNIVERSE_SEPARATOR = ";"
 HEADER = ("key", "value")
 COLUMNS = 2
 FIRST_LINE = 1
@@ -34,6 +36,8 @@ class Config:
     output: str
     ascii_tree: bool
     substring: str
+    reverse: bool = False
+    universe: list = field(default_factory=list)
 
     def items(self):
         """Пары (ключ, значение) в порядке конфигурационного файла."""
@@ -44,6 +48,8 @@ class Config:
             ("output", self.output),
             ("ascii_tree", str(self.ascii_tree).lower()),
             ("filter", self.substring),
+            ("reverse", str(self.reverse).lower()),
+            ("universe", UNIVERSE_SEPARATOR.join(self.universe)),
         ]
 
 
@@ -144,6 +150,26 @@ def check_output(value):
             f"параметр 'output': недопустимые символы в имени '{name}'")
 
 
+def parse_universe(text):
+    """Список Maven-пакетов, разделённых ';' (корни анализируемого набора)."""
+    items = [part.strip() for part in text.split(UNIVERSE_SEPARATOR)]
+    items = [part for part in items if part]
+    for item in items:
+        if not MAVEN_RE.match(item):
+            raise ConfigError(
+                f"параметр 'universe': неверное имя '{item}' "
+                f"(формат группа:артефакт:версия)")
+    return items
+
+
+def check_reverse(reverse, test_mode, universe):
+    """Для Maven режим reverse требует список пакетов universe."""
+    if reverse and not test_mode and not universe:
+        raise ConfigError(
+            "параметр 'universe': для reverse в Maven нужен список "
+            "пакетов через ';' (индекса обратных зависимостей нет)")
+
+
 def load_config(path):
     """Читает и проверяет конфигурацию; возвращает Config."""
     pairs = read_pairs(path)
@@ -153,5 +179,9 @@ def load_config(path):
     check_package(pairs["package"], test_mode)
     check_repo(pairs["repo"], test_mode)
     check_output(pairs["output"])
+    reverse = parse_bool("reverse", pairs.get("reverse", "false"))
+    universe = parse_universe(pairs.get("universe", ""))
+    check_reverse(reverse, test_mode, universe)
     return Config(pairs["package"], pairs["repo"], test_mode,
-                  pairs["output"], ascii_tree, pairs["filter"])
+                  pairs["output"], ascii_tree, pairs["filter"],
+                  reverse, universe)

@@ -57,7 +57,7 @@ class ConfigTest(unittest.TestCase):
     def test_items_order(self):
         """items() возвращает все параметры."""
         keys = [key for key, _ in self.load(make_csv()).items()]
-        self.assertEqual(keys, list(BASE))
+        self.assertEqual(keys[:len(BASE)], list(BASE))
 
 
 class ConfigErrorTest(unittest.TestCase):
@@ -126,3 +126,44 @@ class ConfigErrorTest(unittest.TestCase):
         self.fails(make_csv({"output": ".png"}), "png")
         self.fails(make_csv({"output": "a?b.png"}), "недопустимые")
         self.fails(make_csv({"output": ""}), "не задано")
+
+
+class ReverseConfigTest(unittest.TestCase):
+    """Параметры режима обратных зависимостей."""
+
+    def load(self, **overrides):
+        """Загружает конфигурацию BASE с заменами."""
+        return load_config(write_temp(self, make_csv(overrides)))
+
+    def test_default_off(self):
+        """По умолчанию режим выключен."""
+        config = self.load()
+        self.assertFalse(config.reverse)
+        self.assertEqual(config.universe, [])
+
+    def test_universe(self):
+        """Список корней разделяется точкой с запятой."""
+        config = self.load(reverse="true",
+                           universe="a:b:1; c:d:2")
+        self.assertEqual(config.universe, ["a:b:1", "c:d:2"])
+
+    def test_universe_required(self):
+        """Для Maven reverse без universe - ошибка."""
+        with self.assertRaisesRegex(ConfigError, "universe"):
+            self.load(reverse="true")
+
+    def test_bad_universe_item(self):
+        """Неверное имя в universe."""
+        with self.assertRaisesRegex(ConfigError, "universe"):
+            self.load(universe="guava")
+
+    def test_bad_reverse(self):
+        """Неверное значение reverse."""
+        with self.assertRaisesRegex(ConfigError, "reverse"):
+            self.load(reverse="2")
+
+    def test_test_mode_needs_no_universe(self):
+        """В тестовом режиме universe не нужен."""
+        config = self.load(package="A", repo=SIMPLE, test_mode="true",
+                           reverse="true")
+        self.assertTrue(config.reverse)

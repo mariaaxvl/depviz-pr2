@@ -1,10 +1,11 @@
-"""Визуализатор графа зависимостей (этап 3: построение графа)."""
+"""Визуализатор графа зависимостей (этап 4: обратные зависимости)."""
 import argparse
 import sys
 
 from config import ConfigError, load_config
 from filerepo import FileRepository
-from graph import GraphError, build_graph, describe
+from graph import (GraphError, build_full_graph, build_graph, describe,
+                   describe_reverse, reverse_graph)
 from maven import MavenRepository, RepositoryError
 
 EXIT_OK = 0
@@ -35,6 +36,22 @@ def load_repository(config):
     return MavenRepository(config.repo)
 
 
+def analyze(config, repo):
+    """Строит граф зависимостей или граф обратных зависимостей."""
+    if not config.reverse:
+        return build_graph(repo, config.package, config.substring)
+    roots = repo.packages() if config.test_mode else config.universe
+    full = build_full_graph(repo, roots, config.substring)
+    return reverse_graph(full, config.package)
+
+
+def report(config, graph):
+    """Текстовый отчёт для выбранного режима."""
+    if config.reverse:
+        return describe_reverse(graph, config.package)
+    return describe(graph, config.package)
+
+
 def main(argv=None):
     """Точка входа; возвращает код завершения."""
     configure_output()
@@ -46,14 +63,14 @@ def main(argv=None):
         return EXIT_CONFIG
     try:
         repo = load_repository(config)
-        graph = build_graph(repo, config.package, config.substring)
+        graph = analyze(config, repo)
     except RepositoryError as err:
         print(f"Ошибка репозитория: {err}", file=sys.stderr)
         return EXIT_REPO
     except GraphError as err:
         print(f"Ошибка графа: {err}", file=sys.stderr)
         return EXIT_GRAPH
-    print(describe(graph, config.package))
+    print(report(config, graph))
     for warning in getattr(repo, "warnings", []):
         print(f"Предупреждение: {warning}", file=sys.stderr)
     return EXIT_OK

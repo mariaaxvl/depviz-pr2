@@ -11,11 +11,11 @@ from test_config import make_csv
 REPO_DIR = os.path.join(DATA_DIR, "maven_repo")
 
 
-def run_main(path):
+def run_main(path, *extra):
     """Запускает main с конфигом; возвращает (код, stdout, stderr)."""
     out, err = io.StringIO(), io.StringIO()
     with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
-        code = main([path])
+        code = main([path, "--no-image", *extra])
     return code, out.getvalue(), err.getvalue()
 
 
@@ -94,3 +94,25 @@ class TestModeTest(unittest.TestCase):
         code, _, err = self.run_graph("simple.txt", substring="A")
         self.assertEqual(code, 4)
         self.assertIn("Ошибка графа", err)
+
+
+class AsciiTreeCliTest(unittest.TestCase):
+    """Параметр ascii_tree и ошибки визуализации."""
+
+    def run_simple(self, ascii_tree):
+        """Запускает main для simple.txt с заданным ascii_tree."""
+        path = os.path.join(DATA_DIR, "graphs", "simple.txt")
+        text = make_csv({"package": "A", "repo": path, "test_mode": "true",
+                         "ascii_tree": ascii_tree})
+        return run_main(write_temp(self, text))
+
+    def test_tree_printed(self):
+        """При ascii_tree=true выводится дерево."""
+        _, out, _ = self.run_simple("true")
+        self.assertIn("ASCII-дерево:", out)
+        self.assertIn("`-- D (повтор)", out)
+
+    def test_tree_not_printed(self):
+        """При ascii_tree=false дерево не выводится."""
+        _, out, _ = self.run_simple("false")
+        self.assertNotIn("ASCII-дерево", out)

@@ -61,3 +61,19 @@ try_bad_graph() {
     run_config "$TMP_CONFIG"
     rm -f "$TMP_CONFIG" tests/_tmp_graph.txt
 }
+
+try_reverse() {
+    echo "== $1 =="
+    { test_config "tests/data/graphs/$2.txt" "$3" "$4"
+      echo "reverse,true"; } > "$TMP_CONFIG"
+    run_config "$TMP_CONFIG"
+    rm -f "$TMP_CONFIG"
+}
+
+try_maven_reverse() {
+    echo "== $1 =="
+    { base_config | sed "s/^package,.*/package,$2/"
+      printf '%s\n' "reverse,true" "universe,$3"; } > "$TMP_CONFIG"
+    run_config "$TMP_CONFIG"
+    rm -f "$TMP_CONFIG"
+}

@@ -41,3 +41,23 @@ start_server() {
 stop_server() {
     kill "$SERVER_PID" 2>/dev/null
 }
+
+test_config() {
+    printf '%s\n' "package,$2" "repo,$1" "test_mode,true" \
+        "output,out/g.png" "ascii_tree,false" "filter,$3"
+}
+
+try_graph() {
+    echo "== $1 =="
+    test_config "tests/data/graphs/$2.txt" "$3" "$4" > "$TMP_CONFIG"
+    run_config "$TMP_CONFIG"
+    rm -f "$TMP_CONFIG"
+}
+
+try_bad_graph() {
+    echo "== $1 =="
+    printf '%s\n' "${@:2}" > tests/_tmp_graph.txt
+    test_config tests/_tmp_graph.txt A "" > "$TMP_CONFIG"
+    run_config "$TMP_CONFIG"
+    rm -f "$TMP_CONFIG" tests/_tmp_graph.txt
+}

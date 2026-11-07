@@ -1,0 +1,7 @@
+key,value
+package,A
+repo,tests/data/graphs/simple.txt
+test_mode,true
+output,out/simple.png
+ascii_tree,true
+filter,

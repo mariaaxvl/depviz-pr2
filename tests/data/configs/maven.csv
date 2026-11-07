@@ -1,0 +1,7 @@
+key,value
+package,com.example:app:1.0
+repo,http://localhost:8765
+test_mode,false
+output,out/app.png
+ascii_tree,true
+filter,

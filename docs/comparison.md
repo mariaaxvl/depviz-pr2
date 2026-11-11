@@ -12,10 +12,10 @@
 4. Занесите результат в таблицу ниже.
 
 | Пакет | Вершин в mvn | Вершин у нас | Расхождения |
-|---|---|---|---|
-| com.google.guava:guava:31.1-jre | заполнить | заполнить | заполнить |
-| com.fasterxml.jackson.core:jackson-databind:2.15.2 | заполнить | заполнить | заполнить |
-| org.apache.commons:commons-text:1.10.0 | заполнить | заполнить | заполнить |
+|---|--|--------------|---|
+| com.google.guava:guava:31.1-jre | 7| 7  | Нет. Те же 6 зависимостей и те же версии, порядок совпадает. Отличается только форма вывода: mvn добавляет корневой проект demo:compare и пометки jar и compile, у нас их нет. |
+| com.fasterxml.jackson.core:jackson-databind:2.15.2 | 1 корень + 2 зависимости (jackson-annotations, jackson-core) | 1 корень + 2 зависимости (jackson-annotations, jackson-core)   | Да, полное совпадение |
+| org.apache.commons:commons-text:1.10.0 | 1 корень + 1 зависимость| 1 корень + 1 зависимость   | Да, полное совпадение |
 
 ## Почему результаты могут различаться
 

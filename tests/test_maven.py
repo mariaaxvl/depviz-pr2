@@ -1,4 +1,5 @@
 """Тесты получения зависимостей из POM-файлов Maven."""
+import functools
 import os
 import unittest
 
@@ -24,9 +25,10 @@ def local_fetch(url):
 class DependenciesTest(unittest.TestCase):
     """Проверки разбора POM и разрешения версий."""
 
-    def setUp(self):
-        """Создаёт репозиторий поверх тестовых файлов."""
-        self.repo = MavenRepository(BASE_URL, local_fetch)
+    @functools.cached_property
+    def repo(self):
+        """Репозиторий поверх тестовых файлов (свой для каждого теста)."""
+        return MavenRepository(BASE_URL, local_fetch)
 
     def test_direct_dependencies(self):
         """Версии берутся из свойств parent и dependencyManagement."""

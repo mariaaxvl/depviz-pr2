@@ -1,4 +1,5 @@
 """Тесты построения графа зависимостей."""
+import functools
 import unittest
 
 from filerepo import FileRepository
@@ -85,9 +86,10 @@ class GraphTest(unittest.TestCase):
 class MavenGraphTest(unittest.TestCase):
     """Граф для Maven-репозитория (тестовые POM)."""
 
-    def setUp(self):
-        """Создаёт репозиторий поверх тестовых файлов."""
-        self.repo = MavenRepository(BASE_URL, local_fetch)
+    @functools.cached_property
+    def repo(self):
+        """Репозиторий поверх тестовых файлов (свой для каждого теста)."""
+        return MavenRepository(BASE_URL, local_fetch)
 
     def test_app_graph(self):
         """Транзитивные зависимости app."""

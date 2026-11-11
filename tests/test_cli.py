@@ -1,5 +1,6 @@
 """Тесты командной строки: вывод и коды возврата."""
 import contextlib
+import functools
 import io
 import os
 import unittest
@@ -22,9 +23,10 @@ def run_main(path, *extra):
 class CliTest(unittest.TestCase):
     """Проверки вывода зависимостей и обработки ошибок."""
 
-    def setUp(self):
-        """Запускает локальный репозиторий."""
-        self.url = start_repo_server(self, REPO_DIR)
+    @functools.cached_property
+    def url(self):
+        """URL локального репозитория (сервер запускается при первом вызове)."""
+        return start_repo_server(self, REPO_DIR)
 
     def run_with(self, **overrides):
         """Запускает main с конфигурацией BASE и заменами."""

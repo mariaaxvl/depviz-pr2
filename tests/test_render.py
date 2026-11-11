@@ -1,9 +1,10 @@
 """Тесты визуализации: PlantUML, ASCII-дерево, PNG."""
+import io
 import os
+import threading
 import unittest
 import zlib
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-import threading
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 from filerepo import FileRepository
 from graph import build_graph
@@ -107,15 +108,16 @@ class PngTest(unittest.TestCase):
         """Запрос к серверу содержит закодированную диаграмму."""
         seen = []
 
-        class Handler(BaseHTTPRequestHandler):
+        class Handler(SimpleHTTPRequestHandler):
             """Отвечает PNG на любой GET-запрос."""
 
-            def do_GET(self):
+            def send_head(self):
                 """Запоминает путь запроса и отдаёт PNG."""
                 seen.append(self.path)
                 self.send_response(200)
+                self.send_header("Content-Length", str(len(FAKE_PNG)))
                 self.end_headers()
-                self.wfile.write(FAKE_PNG)
+                return io.BytesIO(FAKE_PNG)
 
             def log_message(self, *args):
                 """Не печатает журнал запросов."""

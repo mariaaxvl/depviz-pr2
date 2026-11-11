@@ -2,7 +2,7 @@
 import re
 import urllib.error
 import urllib.request
-import xml.etree.ElementTree as ET
+from xml.etree import ElementTree
 from collections import namedtuple
 
 TIMEOUT_SEC = 15
@@ -117,8 +117,8 @@ class Pom:
 def parse_pom(text):
     """Разбирает текст POM-файла."""
     try:
-        root = ET.fromstring(text)
-    except ET.ParseError as err:
+        root = ElementTree.fromstring(text)
+    except ElementTree.ParseError as err:
         raise RepositoryError(f"некорректный POM: {err}") from None
     strip_namespaces(root)
     return Pom(root)
